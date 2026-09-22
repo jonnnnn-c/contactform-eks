@@ -81,8 +81,14 @@ make smoke           # verify end-to-end
 
 **AWS EKS** (end to end from the workstation):
 ```bash
-# 0. Configure inputs: edit region, and LOCK cluster_public_access_cidrs to your IP/32
+# 0. Copy the example vars, then EDIT the copy (required):
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+#    - set `region`
+#    - set `cluster_public_access_cidrs` to YOUR workstation IP /32
+#         curl -s https://checkip.amazonaws.com     # <- your IP
+#      (leaving the placeholder locks the cluster API to the wrong IP and the
+#       deploy will fail to connect)
+#    - set `budget_notification_emails` (or leave [] to skip the budget)
 
 # 1. Provision + deploy + smoke test, in one command
 make aws
@@ -90,6 +96,10 @@ make aws
 The deploy prints the public **NLB URL**. Teardown when done: `make aws-down`
 (deletes the NLB first so its ENIs don't block VPC deletion). Local teardown is
 just `helm uninstall contact-app -n contact-app`.
+
+> **Brand-new AWS account?** GuardDuty/Security Hub can reject enablement until
+> the account is fully activated. Set `enable_threat_detection = false` for the
+> first deploy, then flip it to `true` and re-run `make aws-up` once active.
 
 ## Commands
 
