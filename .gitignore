@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+# .terraform.lock.hcl is committed on purpose (pins provider versions)
+
+# Saved plans can embed secret values from state - never commit them
+*.tfplan
+tfplan.bin
+
+# Secrets / local
+*.env
+.env
+kubeconfig
+*.retry
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

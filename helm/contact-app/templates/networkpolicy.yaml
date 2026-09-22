@@ -1,0 +1,48 @@
+{{- if .Values.networkPolicy.enabled }}
+# Default-deny all ingress in the namespace...
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "contact-app.fullname" . }}-default-deny
+  labels: {{- include "contact-app.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+---
+# ...allow traffic to the web pods (from ingress controller / same namespace)...
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "contact-app.fullname" . }}-web
+  labels: {{- include "contact-app.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "contact-app.name" . }}
+      app.kubernetes.io/component: web
+  policyTypes: ["Ingress"]
+  ingress:
+    - ports:
+        - port: {{ .Values.app.port }}
+---
+# ...and allow the DB to be reached ONLY by the web pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "contact-app.fullname" . }}-postgres
+  labels: {{- include "contact-app.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "contact-app.name" . }}
+      app.kubernetes.io/component: postgres
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "contact-app.name" . }}
+              app.kubernetes.io/component: web
+      ports:
+        - port: 5432
+{{- end }}

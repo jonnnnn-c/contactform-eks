@@ -1,0 +1,12 @@
+# Rename to backend.tf and fill in to use a remote, locked state backend.
+# An S3 bucket + DynamoDB lock table are the standard pattern. Keep state OUT of
+# git (see .gitignore) because it can contain sensitive values.
+terraform {
+  backend "s3" {
+    bucket         = "REPLACE-with-your-tfstate-bucket"
+    key            = "contact-app/eks/terraform.tfstate"
+    region         = "ap-southeast-1"
+    dynamodb_table = "REPLACE-with-your-lock-table"
+    encrypt        = true
+  }
+}

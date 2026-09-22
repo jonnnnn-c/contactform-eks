@@ -1,0 +1,31 @@
+# AWS EKS overrides. image.repository is templated by Ansible to the ECR URL.
+app:
+  image:
+    repository: REPLACED_BY_ANSIBLE_WITH_ECR_URL
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+
+# Expose the app with an AWS Network Load Balancer. The "nlb" type is handled
+# by EKS's built-in cloud controller (instance targets) - no AWS Load Balancer
+# Controller needed. Internet-facing by default via the elb-tagged public
+# subnets. Gives a public URL (see the "App URL" task output after deploy).
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+postgres:
+  persistence:
+    createStorageClass: true     # create the gp3 class (below) via EBS CSI
+    storageClass: gp3
+    size: 10Gi
+
+# ALB ingress disabled: we expose via the NLB Service above, which needs no
+# extra controller. To use an ALB instead, install the AWS Load Balancer
+# Controller and set ingress.enabled=true.
+ingress:
+  enabled: false

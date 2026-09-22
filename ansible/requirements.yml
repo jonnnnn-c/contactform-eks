@@ -1,0 +1,8 @@
+# Optional Galaxy collections. The playbooks primarily shell out to the aws,
+# kubectl and helm CLIs (which are prerequisites anyway), so these are only
+# needed if you switch tasks to the kubernetes.core modules.
+collections:
+  - name: kubernetes.core
+    version: ">=5.0.0"
+  - name: community.docker
+    version: ">=3.0.0"

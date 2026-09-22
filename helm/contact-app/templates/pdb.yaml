@@ -1,0 +1,13 @@
+{{- if .Values.app.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "contact-app.fullname" . }}
+  labels: {{- include "contact-app.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.app.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "contact-app.name" . }}
+      app.kubernetes.io/component: web
+{{- end }}

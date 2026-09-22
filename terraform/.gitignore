@@ -1,0 +1,16 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+# .terraform.lock.hcl IS committed on purpose - it pins provider versions so
+# every clone/CI run resolves the exact same providers (reproducible builds).
+override.tf
+override.tf.json
+
+# Saved plans can embed secret values from state - never commit them
+*.tfplan
+tfplan.bin
+*.bin

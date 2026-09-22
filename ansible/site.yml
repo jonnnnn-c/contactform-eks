@@ -1,0 +1,17 @@
+---
+# End-to-end deployment of the contact-form app onto an existing EKS cluster.
+# Assumes Terraform has already provisioned the infrastructure.
+#
+#   ansible-playbook site.yml
+#
+- name: Deploy contact-form app to EKS
+  hosts: local
+  gather_facts: true
+  roles:
+    - role: preflight
+    - role: kubeconfig
+    - role: ecr_image
+      when: build_image | bool
+    - role: namespace_rbac
+    - role: secrets
+    - role: app_deploy

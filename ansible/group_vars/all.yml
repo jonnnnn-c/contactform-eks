@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Central configuration for the EKS deployment. Override on the CLI with
+# -e "key=value" or point --extra-vars at a file. NO secrets live here; the DB
+# password is generated at deploy time and stored only in a Kubernetes Secret.
+# ---------------------------------------------------------------------------
+
+# AWS / cluster identity (should match terraform/terraform.tfvars).
+aws_region:   "ap-southeast-1"
+project:      "contact-app"
+# NOTE: 'environment' is a reserved Ansible name (it sets task env vars), so we
+# use 'env_name' — otherwise {{ environment }} renders empty (=> contact-app-[]).
+env_name:     "dev"
+cluster_name: "{{ project }}-{{ env_name }}"
+
+# Kubernetes target.
+app_namespace: "contact-app"
+helm_release:  "contact-app"
+
+# Paths (relative to repo root; playbooks are run from the ansible/ dir).
+repo_root:   "{{ playbook_dir }}/.."
+chart_path:  "{{ repo_root }}/helm/contact-app"
+values_file: "{{ chart_path }}/values-eks.yaml"
+app_dir:     "{{ repo_root }}/app"
+
+# Image.
+image_tag:      "0.1.0"
+build_image:    true          # build + push to ECR from the workstation
+ecr_repo_url:   ""            # auto-discovered from terraform output if empty
+
+# Secret (Kubernetes Secret name; value generated, never stored in git).
+db_secret_name: "contact-app-db"
+db_password_length: 24

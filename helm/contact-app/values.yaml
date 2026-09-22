@@ -1,0 +1,71 @@
+# Default values shared by all environments. Environment-specific overrides
+# live in values-rke2.yaml and values-eks.yaml. Secrets are NEVER stored here;
+# they are created out-of-band by Ansible (see ansible/roles/secrets).
+
+nameOverride: ""
+fullnameOverride: ""
+
+app:
+  image:
+    repository: contact-app       # overridden with the ECR repo on EKS
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 8080
+  env:
+    LOG_LEVEL: INFO
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 500m, memory: 256Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16.4-alpine"
+    pullPolicy: IfNotPresent
+  db:
+    name: contacts
+    user: contact
+  port: 5432
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 1, memory: 512Mi }
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""             # "" = cluster default; set per environment
+    createStorageClass: false    # EKS sets true to create the gp3 class below
+
+# The Secret is expected to already exist (created by Ansible). Set create=true
+# only for a quick manual "helm install" outside the Ansible workflow.
+secret:
+  name: contact-app-db
+  create: false
+  dbPassword: ""                 # only used when create=true (dev convenience)
+  flaskSecretKey: ""
+
+service:
+  type: ClusterIP
+  annotations: {}          # per-environment (e.g. NLB annotations on EKS)
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: ""
+
+networkPolicy:
+  enabled: true
+
+serviceAccount:
+  create: true
+  name: ""

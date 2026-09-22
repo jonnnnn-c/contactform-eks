@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Us</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="card">
+    <h1>Contact Us</h1>
+    <p class="sub">Send us a message and we'll get back to you.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('contact') }}">
+      <label>Name
+        <input type="text" name="name" maxlength="120" required>
+      </label>
+      <label>Email
+        <input type="email" name="email" maxlength="255" required>
+      </label>
+      <label>Message
+        <textarea name="message" rows="5" maxlength="5000" required></textarea>
+      </label>
+      <button type="submit">Send message</button>
+    </form>
+    <p class="foot">Two-tier demo · Flask + PostgreSQL on Kubernetes</p>
+  </main>
+</body>
+</html>

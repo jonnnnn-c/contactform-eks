@@ -1,0 +1,65 @@
+---
+- name: Discover ECR repo URL (when not building image in this run)
+  ansible.builtin.command: terraform -chdir={{ repo_root }}/terraform output -raw ecr_repository_url
+  register: tf_ecr2
+  changed_when: false
+  failed_when: false
+  when: ecr_repo_url | length == 0
+
+- name: Set ECR repo fact for helm
+  ansible.builtin.set_fact:
+    ecr_repo_url: "{{ tf_ecr2.stdout | trim }}"
+  when: ecr_repo_url | length == 0 and tf_ecr2.stdout is defined and tf_ecr2.stdout | trim | length > 0
+
+- name: Deploy / upgrade the Helm release (idempotent)
+  ansible.builtin.command:
+    argv:
+      - helm
+      - upgrade
+      - --install
+      - "{{ helm_release }}"
+      - "{{ chart_path }}"
+      - --namespace
+      - "{{ app_namespace }}"
+      - --values
+      - "{{ values_file }}"
+      - --set
+      - "app.image.repository={{ ecr_repo_url }}"
+      - --set
+      - "app.image.tag={{ image_tag }}"
+      - --set
+      - "secret.name={{ db_secret_name }}"
+      - --wait
+      - --timeout
+      - 10m
+  register: helm_out
+  changed_when: "'has been upgraded' in helm_out.stdout or 'has been installed' in helm_out.stdout"
+
+- name: Wait for the web deployment to be available
+  ansible.builtin.command: >-
+    kubectl -n {{ app_namespace }} rollout status deploy/{{ helm_release }} --timeout=180s
+  changed_when: false
+
+- name: Show the service / ingress
+  ansible.builtin.command: kubectl -n {{ app_namespace }} get svc,ingress,pods -o wide
+  changed_when: false
+  register: final_state
+
+- name: Deployment summary
+  ansible.builtin.debug:
+    var: final_state.stdout_lines
+
+- name: Get the public NLB hostname
+  ansible.builtin.command: >-
+    kubectl -n {{ app_namespace }} get svc {{ helm_release }}
+    -o jsonpath={.status.loadBalancer.ingress[0].hostname}
+  register: nlb_host
+  changed_when: false
+  failed_when: false
+
+- name: Show the public app URL
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'App URL: http://' + nlb_host.stdout + '  (DNS may take 1-2 min to resolve)'
+         if nlb_host.stdout | default('') | length > 0
+         else 'NLB hostname not assigned yet - check: kubectl -n ' + app_namespace + ' get svc ' + helm_release }}

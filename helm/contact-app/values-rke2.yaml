@@ -1,0 +1,16 @@
+# Local RKE2 development cluster overrides.
+app:
+  image:
+    repository: contact-app
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  autoscaling:
+    enabled: false               # keep it simple locally
+  replicaCount: 1
+postgres:
+  persistence:
+    storageClass: local-path     # RKE2 ships local-path provisioner
+ingress:
+  enabled: true
+  className: nginx               # RKE2 default ingress-nginx
+  host: contact.local

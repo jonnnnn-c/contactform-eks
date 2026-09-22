@@ -1,0 +1,21 @@
+---
+- name: Create the application namespace (idempotent)
+  ansible.builtin.command: kubectl create namespace {{ app_namespace }} --dry-run=client -o yaml
+  register: ns_manifest
+  changed_when: false
+
+- name: Apply the namespace with Pod Security Admission labels
+  ansible.builtin.shell: |
+    kubectl apply -f - <<'MANIFEST'
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: {{ app_namespace }}
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+        pod-security.kubernetes.io/enforce-version: latest
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/warn: restricted
+    MANIFEST
+  register: ns_apply
+  changed_when: "'configured' in ns_apply.stdout or 'created' in ns_apply.stdout"

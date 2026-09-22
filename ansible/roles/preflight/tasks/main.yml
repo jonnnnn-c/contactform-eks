@@ -1,0 +1,27 @@
+---
+# Use presence-on-PATH rather than "<cli> --version": modern kubectl/helm
+# reject the --version flag (kubectl wants "version --client", helm "version"),
+# so a version call would false-fail even when the tool is installed.
+- name: Ensure required CLIs are installed
+  ansible.builtin.shell: "command -v {{ item }}"
+  changed_when: false
+  loop:
+    - aws
+    - kubectl
+    - helm
+  register: cli_checks
+  failed_when: cli_checks.rc != 0
+
+- name: Ensure docker is available (only when building the image)
+  ansible.builtin.command: docker version
+  changed_when: false
+  when: build_image | bool
+
+- name: Verify AWS credentials are valid
+  ansible.builtin.command: aws sts get-caller-identity --output json
+  changed_when: false
+  register: aws_identity
+
+- name: Show the authenticated AWS identity
+  ansible.builtin.debug:
+    msg: "Authenticated as {{ (aws_identity.stdout | from_json).Arn }}"
